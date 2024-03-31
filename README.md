@@ -1,87 +1,92 @@
-# Spam Detection Project
+# Unit Test Script for Spam Classification Docker Container
 
-This project aims to develop a spam detection system using machine learning techniques. The system is designed to classify incoming messages as either spam or non-spam (ham).
+This repository contains a Python script (`test.py`) for unit testing a spam classification Docker container. This README file provides a comprehensive explanation of the script's functionality, dependencies, execution steps, and breakdown of key functions.
 
-## Model Selection
+## Functionality
 
-For this project, the TF-IDF vectorization and logistic regression models were chosen based on the results obtained in the initial assignment. In the first assignment, these models demonstrated superior performance compared to other alternatives. Therefore, they were selected for implementation in this project.
+The `test.py` script performs the following actions:
 
-Specifically, logistic regression was directly utilized in the `train.ipynb` notebook. It was identified as the most effective model based on the evaluation results from the first assignment.
+1. **Launches the Docker Container:**
+   - It executes necessary commands to launch the Docker container named "spam-classifier".
 
-## File Descriptions
+2. **Sends a Sample Email for Classification:**
+   - It constructs a sample email with spammy characteristics.
+   - It sends the email to the container's API endpoint (`http://127.0.0.1:5000/score`) for spam classification.
 
-- `app.py`: Flask application that exposes an API endpoint for scoring text messages for spam.
-- `score.py`: Module containing the scoring function for text messages using the trained model.
-- `test.py`: Contains unit tests and integration tests for the scoring function and Flask application.
-- `train.ipynb`: Jupyter Notebook used for training the logistic regression model and saving it as a pickle file.
-- `coverage.txt`: The coverage report provides insights into the percentage of code covered by tests, helping evaluate the comprehensiveness of the test suite. It shows the number of statements (Stmts) in each file, the number of statements missed (Miss), and the coverage percentage (Cover). 
+3. **Verifies the API Response Structure:**
+   - It processes the response received from the container's API.
+   - It asserts that the response structure adheres to expectations, including:
+     - Presence of a key named `prediction` with an integer value (0 for Not Spam, 1 for Spam).
+     - Presence of a key named `propensity` with a float value representing the spam probability.
 
-## Functions and Test Cases
+4. **Handles Potential Exceptions:**
+   - It incorporates exception handling to gracefully handle potential errors during the request process, such as network issues or unexpected responses.
 
-### `score.py`
+5. **Stops and Removes the Launched Container:**
+   - After test completion, the script executes commands to stop and remove the launched container (assuming it exists).
 
-This module contains functions for preprocessing text data and scoring it using a trained model.
+## Dependencies
 
-#### Functions:
+The script relies on the following external libraries:
 
-#### `preprocess_text(text: str) -> List[str]`
+- `pytest` (testing framework)
+- `joblib` (model persistence/loading)
+- `os` (operating system interaction)
+- `requests` (HTTP requests)
+- `threading` (threading functionalities)
+- `subprocess` (subprocess execution)
+- `time` (timing functions)
+- `score` (custom module for spam classification logic - assumed to be in the same directory)
 
-Preprocesses the input text by converting it to lowercase, removing punctuation, numbers, and stop words, tokenizing it, and performing lemmatization.
+**Note:** Ensure these libraries are installed in your Python environment before running the tests.
 
-- `text`: Input text string.
-- Returns a list of preprocessed tokens.
 
-#### `score(text: str, model, threshold: float) -> Tuple[bool, float]`
 
-Scores the input text using the provided model and threshold.
+# Explanation of Pre-commit Hook Shell Script
 
-- `text`: Input text string.
-- `model`: Trained model object.
-- `threshold`: Threshold value for prediction.
-- Returns a tuple containing the prediction (True for spam, False for non-spam) and the propensity score.
+This shell script serves as a pre-commit hook in a Git repository. It ensures that tests are run before any commit is made, but specifically on the "main" branch. Below is a breakdown of its functionality:
 
-### `test.py`
+1. **Get the Current Active Branch Name:**
+   - The script retrieves the name of the currently active branch using the command:
+     ```bash
+     current_branch=$(git branch | grep '*' | sed 's/* //')
+     ```
+   - It uses `git branch` to list all branches, `grep` to find the branch marked with '*', indicating the active branch, and `sed` to extract only the branch name.
 
-This module contains unit tests for the functions in the `score.py` module.
+2. **Check the Current Branch:**
+   - The script checks if the current branch is "main" using:
+     ```bash
+     if [ "$current_branch" = "main" ]; then
+     ```
+   - This condition ensures that the tests are only run if the current branch is "main".
 
-#### Test Cases:
+3. **Informative Message:**
+   - Before running the tests, the script prints an informative message indicating the branch being tested:
+     ```bash
+     echo "Running tests on branch: $current_branch"
+     ```
 
-- `TestScore.test_smoke()`: Tests if the `score` function returns a non-None output.
-- `TestScore.test_format()`: Tests if the input and output formats of the `score` function match the expected formats.
-- `TestScore.test_prediction()`: Tests if the prediction output of the `score` function is either 0 or 1.
-- `TestScore.test_propensity()`: Tests if the propensity score output of the `score` function is between 0 and 1.
-- `TestScore.test_threshold_0()`: Tests if the `score` function returns a prediction of 1 when the threshold is set to 0.
-- `TestScore.test_threshold_1()`: Tests if the `score` function returns a prediction of 0 when the threshold is set to 1.
-- `TestScore.test_spam_input()`: Tests the `score` function with a sample spam input.
-- `TestScore.test_non_spam_input()`: Tests the `score` function with a sample non-spam input.
+4. **Run Tests:**
+   - The script executes the test script (assumed to be named "test.py"):
+     ```bash
+     python test.py
+     ```
+   - Replace "test.py" with the actual filename if different.
 
-#### Integration Test
+5. **Handle Test Results:**
+   - After executing the tests, the script checks the exit status:
+     ```bash
+     if [ $? -ne 0 ]; then
+     ```
+   - If the exit status is non-zero, it means the tests failed. The script prints a warning message and exits with a non-zero status:
+     ```bash
+     echo "Tests FAILED! Fix errors before committing."
+     exit 1
+     ```
+   - If the exit status is zero, indicating the tests passed, the script prints a success message:
+     ```bash
+     echo "Tests PASSED."
+     ```
 
-- `test_flask()`: Integration test that launches the Flask app using the command line, tests the response from the localhost endpoint, and closes the Flask app using the command line.
+**Note:** Ensure that this script is located in the `.git/hooks` directory of your Git repository and is named `pre-commit`. Also, make it executable using `chmod +x pre-commit`.
 
-### `app.py`
-
-This module contains the implementation of a Flask API for scoring text data using a trained model.
-
-### API Endpoints
-
-#### `POST /`
-
-Accepts text input and an optional threshold for prediction. Returns a JSON response containing the prediction and propensity score.
-
-#### Request Parameters:
-
-- `text`: Text input string.
-- `threshold`: (Optional) Threshold value for prediction (default is 0.5).
-
-#### Example Request:
-
-```http
-POST / HTTP/1.1
-Host: localhost:5000
-Content-Type: application/json
-
-{
-    "text": "Your text input here",
-    "threshold": 0.5
-}
