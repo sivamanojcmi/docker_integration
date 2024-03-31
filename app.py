@@ -87,4 +87,4 @@ def score_endpoint():
 
 if __name__ == "_main_":
     # Run the app
-    app.run(debug=True)
+    app.run(debug=True, host = "0.0.0.0", port = 5000)
