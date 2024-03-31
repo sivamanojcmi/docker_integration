@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 import score
 import joblib
 import warnings
+import pytest
 
 warnings.filterwarnings("ignore")
 
